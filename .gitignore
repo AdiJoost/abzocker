@@ -160,6 +160,7 @@ cython_debug/
 #.idea/
 
 Ressources/
+generatedData/*
 sp500_companies.csv
 sp500_index.csv
 sp500_stocks.csv
