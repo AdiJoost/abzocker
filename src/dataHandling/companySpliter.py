@@ -25,9 +25,9 @@ def getDatapath(filename, resourceFolder=RESOURCE_FOLDER):
     return os.path.join(cwd, resourceFolder, filename)
 
 
-def loadDataset(path, dataColumn):
+def loadDataset(path):
     df = pd.read_csv(path)
-    df[dataColumn] = pd.to_datetime(df[dataColumn])
+    df[DATE_COLUMN] = pd.to_datetime(df[DATE_COLUMN])
     df = df.sort_values(by=DATE_COLUMN, ascending=True)
     return df
 
