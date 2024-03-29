@@ -7,8 +7,20 @@ DATA_FILE = "sp500_stocks.csv"
 DATE_COLUMN = "Date"
 
 def main():
-    extractAndSaveCompanyStocks()
+    extractAndSaveAllStocksInDataset()
 
+
+def extractAndSaveAllStocksInDataset():
+    stockSymbols = getStocksymbols()
+    
+    for stock in stockSymbols:
+        extractAndSaveCompanyStocks(companyName=stock, saveFile=f"{stock}.csv")
+    
+def getStocksymbols():
+    dataPath = getDatapath(DATA_FILE)
+    df = loadDataset(dataPath)
+    return df.Symbol.unique()
+    
 def extractAndSaveCompanyStocks(companyName="MMM", saveFile="coolFile.csv", autoOverwrite=False):
     """
     companyName: String with the Symbol-Name of the company name you wish to extract
