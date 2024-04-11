@@ -1,5 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras import layers
+from tensorflow.keras.layers.experimental import preprocessing
 from keras.utils import to_categorical
 import numpy as np
 
@@ -14,7 +15,7 @@ y_train = to_categorical(y_train, num_classes)
 y_test= to_categorical(y_test, num_classes)
 
 from keras import layers, models
-
+# Expert Model
 def create_expert_model(input_shape, num_outputs):
     model = models.Sequential([
         layers.Conv2D(32, (3, 3), activation='relu', input_shape=input_shape),
@@ -29,6 +30,7 @@ def create_expert_model(input_shape, num_outputs):
     ])
     return model
 
+# Gating Model
 def create_gating_model(num_experts, num_outputs):
     model = models.Sequential([
         layers.Dense(64, activation='relu', input_shape=(num_experts,)),
@@ -68,7 +70,6 @@ history = moe_model.fit(
     batch_size=64)
 
 plt.plot(history.history['loss'], label='Training Loss')
-plt.plot(history.history['val_loss'], label='Validation Loss')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.legend()
