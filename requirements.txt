@@ -1,2 +1,5 @@
 numpy
 pandas
+keras
+scikit-learn
+tensorflow

@@ -7,9 +7,21 @@ DATA_FILE = "sp500_stocks.csv"
 DATE_COLUMN = "Date"
 
 def main():
-    extractAndSaveCompanyStocks()
+    extractAndSaveAllStocksInDataset()
 
-def extractAndSaveCompanyStocks(companyName="MMM", saveFile="coolFile.csv", autoOverwrite=False):
+
+def extractAndSaveAllStocksInDataset():
+    stockSymbols = getStocksymbols()
+    
+    for stock in stockSymbols:
+        extractAndSaveCompanyStocks(companyName=stock, saveFile=f"{stock}.pkl")
+    
+def getStocksymbols():
+    dataPath = getDatapath(DATA_FILE)
+    df = loadDataset(dataPath)
+    return df.Symbol.unique()
+    
+def extractAndSaveCompanyStocks(companyName="MMM", saveFile="coolFile.pkl", autoOverwrite=False):
     """
     companyName: String with the Symbol-Name of the company name you wish to extract
     saveFile: name of the file, where the extracted dataFrame is saved. Example 'myFile.csv'
@@ -38,7 +50,7 @@ def filterSet(companyName, df, column="Symbol"):
 
 def saveDataset(fileName, df, autoOverwrite):
     path = getAndValidatePath(fileName, autoOverwrite)
-    df.to_csv(path)
+    df.to_pickle(path)
 
 def getAndValidatePath(filename, autoOverwrite):
     path = getSavingPath(filename)
