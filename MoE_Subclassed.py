@@ -4,9 +4,37 @@ from keras.utils import to_categorical
 import numpy as np
 from keras.datasets import cifar10
 
-# Load CIFAR-10 dataset
-(x_train, y_train), (x_test, y_test) = cifar10.load_data()
-x_train, x_test = x_train / 255.0, x_test / 255.0
+"""
+General implementation of a mixture of experts model using the keras subclassing api
+example is for the cifar10 dataset of images (32,32,3)
+
+"""
+
+
+
+def main():
+        
+    # Load CIFAR-10 dataset
+    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+    x_train, x_test = x_train / 255.0, x_test / 255.0
+    
+    num_classes = 10
+    num_experts = 3
+    input_shape = input_shape=(32, 32, 3)
+    
+    # input shape is passed vie **kwargs
+    moe_model = MixtureOfExperts(num_experts, num_classes, name="mixture_of_experts", input_shape=input_shape)
+    
+    moe_model.compile(optimizer=optimizers.Adam(),
+                    loss=losses.SparseCategoricalCrossentropy(),
+                    metrics=[metrics.SparseCategoricalAccuracy()])
+    
+    moe_model.fit(x_train, y_train, epochs=5, validation_data=(x_test, y_test), verbose=2)
+    
+    print(moe_model.summary())
+
+
+
 
 class CNNBlock(layers.Layer):
     def __init__(self, filters, kernel_size=(3,3), activation="relu", name=None, **kwargs):
@@ -69,28 +97,17 @@ class MixtureOfExperts(tf.keras.Model):
         expert_outputs = tf.stack(expert_outputs, axis=1)  # Stack outputs to (batch_size, num_experts, num_classes)
         expert_weights = tf.expand_dims(expert_weights, axis=2)  # Expand dims to (batch_size, num_experts, 1)
         weighted_expert_outputs = tf.reduce_sum(expert_outputs * expert_weights, axis=1)  # Weighted sum
-
+        
         return weighted_expert_outputs
 
 
-    
-def model(self):
-        inputs = tf.keras.Input(shape=(32, 32, 3))
-        outputs = self.call(inputs)
-        return tf.keras.Model(inputs=inputs, outputs=outputs)
+
+    def model(self):
+            inputs = tf.keras.Input(shape=(32, 32, 3))
+            outputs = self.call(inputs)
+            return tf.keras.Model(inputs=inputs, outputs=outputs)
 
 
 
-num_classes = 10
-num_experts = 3
-
-moe_model = MixtureOfExperts(num_experts, num_classes, name="mixture_of_experts", input_shape=(32, 32, 3))
-
-
-moe_model.compile(optimizer=optimizers.Adam(),
-                  loss=losses.SparseCategoricalCrossentropy(),
-                  metrics=[metrics.SparseCategoricalAccuracy()])
-
-moe_model.fit(x_train, y_train, epochs=5, validation_data=(x_test, y_test), verbose=2)
-
-print(moe_model.summary())
+if __name__ == "__main__":
+    main()
