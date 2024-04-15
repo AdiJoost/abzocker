@@ -2,17 +2,29 @@ from keras.utils import timeseries_dataset_from_array
 from sklearn.preprocessing import MinMaxScaler
 import pandas as pd
 import os
+from targetTypeEnum import TargetType
 
 def main():
     data =_loadData()
-    print(data)
+    numberOfDatapointsForPrediction = 10
+    inputData = data[:-numberOfDatapointsForPrediction]
+    targets = data[numberOfDatapointsForPrediction:][TargetType.CLOSE.value]
+    inputDataWindow = timeseries_dataset_from_array(inputData, targets=None, sequence_length=numberOfDatapointsForPrediction)
+    print(len(inputDataWindow))
+    print(len(targets))
 
+    """
+    for batch in zip(inputDataWindow, targets):
+        inputData, target = batch
+        print(f"{inputData} ------ {target}")
+"""
 def getModel():
     pass
 
 def _loadData():
     path = _getPath("coolFile.pkl")
     data = pd.read_pickle(path)
+    data["Date"] = data["Date"].astype("int64")
     print(data.head())
     return data.to_numpy()
 
