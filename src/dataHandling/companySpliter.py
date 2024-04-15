@@ -21,7 +21,7 @@ def getStocksymbols():
     df = loadDataset(dataPath)
     return df.Symbol.unique()
     
-def extractAndSaveCompanyStocks(companyName="MMM", saveFile="coolFile.pkl", autoOverwrite=False):
+def extractAndSaveCompanyStocks(companyName="MMM", saveFile="coolFile.pkl", dropCompanyName=True, autoOverwrite=False):
     """
     companyName: String with the Symbol-Name of the company name you wish to extract
     saveFile: name of the file, where the extracted dataFrame is saved. Example 'myFile.csv'
@@ -30,6 +30,8 @@ def extractAndSaveCompanyStocks(companyName="MMM", saveFile="coolFile.pkl", auto
     dataPath = getDatapath(DATA_FILE)
     df = loadDataset(dataPath)
     df = filterSet(companyName, df)
+    if dropCompanyName:
+        df = df.drop("Symbol", axis=1)
     saveDataset(saveFile, df, autoOverwrite)
 
 def getDatapath(filename, resourceFolder=RESOURCE_FOLDER):
