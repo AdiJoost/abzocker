@@ -2,7 +2,8 @@ import src.dataHandling.companySpliter as companySpliter
 
 
 def main():
-    companySpliter.extractAndSaveAllStocksInDataset()
+    companySpliter.extractAndSaveCompanyStocks("MMM")
+    #companySpliter.extractAndSaveAllStocksInDataset()
 
 
 if __name__ == "__main__":
