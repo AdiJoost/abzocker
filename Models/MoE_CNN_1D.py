@@ -12,7 +12,6 @@ example is for the cifar10 dataset of images (32,32,3)
 
 
 
-
 def main():
         
     # Load CIFAR-10 dataset
