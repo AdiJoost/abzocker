@@ -10,14 +10,14 @@ def main():
     print(X.shape)
     print(Y)
     
-def generateDataSet(filename, sequenceLength, targetType:TargetType, saveAsFile=False, forceOverwrite=False):
+def generateDataSet(filename: str, sequenceLength: int, targetType:TargetType, saveAsFile=False, forceOverwrite=False):
     """
     returns X, Y: timeSeries array and target array
-    (String)filename: .pkl file to load. EG: "mmm.pkl"
-    (Integer)sequence: Length of the output sequences (in number of timesteps).
-    (TargetType)targetType: Enum for desired target value in y.
-    (Bool)saveAsFile: If True, saves X and Y in .../timeSeries/X_{filename}.npy and .../timeSeries/Y_{filename}.npy
-    (Bool)forceOverwrite: If False, method wants to save and saving file already exist, ask user to confirm overwrite. If true, always overwrites.
+    filename: .pkl file to load. EG: "mmm.pkl"
+    sequence: Length of the output sequences (in number of timesteps).
+    targetType: Enum for desired target value in y.
+    saveAsFile: If True, saves X and Y in .../timeSeries/X_{filename}.npy and .../timeSeries/Y_{filename}.npy
+    forceOverwrite: If False, method wants to save and saving file already exist, ask user to confirm overwrite. If true, always overwrites.
     """
     data = _loadData(filename)
     X, Y = _getTimeWindow(data, sequenceLength, targetType)
@@ -69,7 +69,6 @@ def _getSavePath(filename):
     if len(head) < 1:
         raise NameError("Cannot get the working Path. Look at Source Code and Debug. :/")
     return os.path.join(head[0], "abzocker", "generatedData", "timeSeries", filename)
-
 
 if __name__ == "__main__":
     main()
