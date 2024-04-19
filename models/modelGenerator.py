@@ -13,6 +13,14 @@ def main():
     print(Y)
     
 def generateDataSet(filename, sequenceLength, targetType:TargetType, saveAsFile=False, forceOverwrite=False):
+    """
+    returns X, Y: timeSeries array and target array
+    (String)filename: .pkl file to load. EG: "mmm.pkl"
+    (Integer)sequence: Length of the output sequences (in number of timesteps).
+    (TargetType)targetType: Enum for desired target value in y.
+    (Bool)saveAsFile: If True, saves X and Y in .../timeSeries/X_{filename}.npy and .../timeSeries/Y_{filename}.npy
+    (Bool)forceOverwrite: If False, method wants to save and saving file already exist, ask user to confirm overwrite. If true, always overwrites.
+    """
     data = _loadData(filename)
     X, Y = _getTimeWindow(data, sequenceLength, targetType)
     if saveAsFile:
