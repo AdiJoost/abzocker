@@ -100,8 +100,6 @@ class MixtureOfExperts(tf.keras.Model):
         
         return weighted_expert_outputs
 
-
-
     def model(self):
             inputs = tf.keras.Input(shape=(32, 32, 3))
             outputs = self.call(inputs)
