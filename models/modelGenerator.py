@@ -7,25 +7,14 @@ from targetTypeEnum import TargetType
 def main():
     data =_loadData()
     numberOfDatapointsForPrediction = 10
-    inputData = data[:-numberOfDatapointsForPrediction]
-    targets = data[numberOfDatapointsForPrediction:][TargetType.CLOSE.value]
-    inputDataWindow = timeseries_dataset_from_array(inputData, targets=None, sequence_length=numberOfDatapointsForPrediction)
-    print(len(inputDataWindow))
-    print(len(targets))
+    
+def generateDataSet(filename, sequenzLength, targetType:TargetType, saveAsFile=False):
+    data = _loadData(filename)
 
-    """
-    for batch in zip(inputDataWindow, targets):
-        inputData, target = batch
-        print(f"{inputData} ------ {target}")
-"""
-def getModel():
-    pass
-
-def _loadData():
-    path = _getPath("coolFile.pkl")
+def _loadData(filename):
+    path = _getPath(filename)
     data = pd.read_pickle(path)
     data["Date"] = data["Date"].astype("int64")
-    print(data.head())
     return data.to_numpy()
 
 def _getPath(filename):
