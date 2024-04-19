@@ -1,9 +1,7 @@
 from keras.utils import timeseries_dataset_from_array
-from sklearn.preprocessing import MinMaxScaler
-import pandas as pd
 import numpy as np
+import pandas as pd
 import os
-import pickle as pkl
 from targetTypeEnum import TargetType
 
 def main():
