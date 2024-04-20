@@ -161,6 +161,7 @@ cython_debug/
 
 Ressources/
 generatedData/*.pkl
+generatedData/timeSeries/*.npy
 sp500_companies.csv
 sp500_index.csv
 sp500_stocks.csv
