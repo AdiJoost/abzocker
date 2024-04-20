@@ -37,11 +37,13 @@ def main():
 
 
 class CNNBlock(layers.Layer):
+    # Define all  trainable layers inside the init method
     def __init__(self, filters, kernel_size=(3,3), activation="relu", name=None, **kwargs):
         super(CNNBlock, self).__init__(name=name, **kwargs)
         self.conv = layers.Conv2D(filters, kernel_size, activation=activation, padding="same", name=f"{name}_conv")
         self.maxPool = layers.MaxPooling2D(name=f'{name}_pool')
         
+    # call the layers insider the call method based on the network design, performs the forward pass
     def call(self, inputs):
         x = self.conv(inputs)
         x = self.maxPool(x)
@@ -51,7 +53,6 @@ class CNNBlock(layers.Layer):
 class ExpertModel(tf.keras.Layer):
     def __init__(self, num_classes, name=None, **kwargs):
         super(ExpertModel, self).__init__(name=name, **kwargs)
-        # define model structure/layers/components and store them in class
         self.cnn1 = CNNBlock(32, name=f"{name}_cnn1")
         self.cnn2 = CNNBlock(64, name=f"{name}_cnn2")
         self.cnn3 = CNNBlock(128, name=f"{name}_cnn3")
@@ -62,10 +63,7 @@ class ExpertModel(tf.keras.Layer):
     
     
     def call(self, inputs):
-        # define how the forward pass looks like
-        # assemble the components from the init into a network
-        # return prediction of model
-        x = self.cnn1(inputs) #apply cnn1 to inputs 
+        x = self.cnn1(inputs)
         x = self.cnn2(x)
         x = self.flatten(x)
         self.dense_units = x.shape[-1] # number of units in the flattened x 
@@ -99,11 +97,6 @@ class MixtureOfExperts(tf.keras.Model):
         weighted_expert_outputs = tf.reduce_sum(expert_outputs * expert_weights, axis=1)  # Weighted sum
         
         return weighted_expert_outputs
-
-    def model(self):
-            inputs = tf.keras.Input(shape=(32, 32, 3))
-            outputs = self.call(inputs)
-            return tf.keras.Model(inputs=inputs, outputs=outputs)
 
 
 
