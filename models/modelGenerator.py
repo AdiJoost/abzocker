@@ -8,18 +8,27 @@ np.random.seed(42)
 
 
 def main():
-    generateSlicedTimeseriesForNStocks(20)
+    generateSlicedTimeseriesForNStocks(2)
     
-def generateSlicedTimeseriesForNStocks(numberOfStocks: int):
+def generateSlicedTimeseriesForNStocks(numberOfStocks: int, saveAsOneFile=True):
     cwd = os.getcwd().split("abzocker")[0]
     dataPath = os.path.join(cwd, "abzocker", "Resources", "sp500_stocks.csv")
     stockSymbols = pd.read_csv(dataPath).Symbol.unique()
     stockPicks = np.random.choice(stockSymbols, numberOfStocks)
 
+    X = []
+    Y = []
     for stock in stockPicks:
-        generateDataSet(f"{stock}.pkl", 20, TargetType.CLOSE, True, True)
-
+        XNew, YNew = generateDataSet(f"{stock}.pkl", 20, TargetType.CLOSE, saveAsFile=False)
+        print(f"X_shape: {XNew.shape}, Y_shape: {YNew.shape}")
+        X.append(XNew)
+        Y.append(YNew)
     
+    X = np.concatenate(X, axis=0)
+    Y = np.concatenate(Y, axis=0)    
+    print(f"X_total shape {X.shape}, Y_total shape {Y.shape}")
+    
+    _saveFile("combined.pkl", X, Y, True)
     
 
 
