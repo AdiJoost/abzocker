@@ -3,13 +3,26 @@ import numpy as np
 import pandas as pd
 import os
 from targetTypeEnum import TargetType
+#from dataHandling.StockDataExtractor import getStocksymbols
+np.random.seed(42)
+
 
 def main():
-    numberOfDatapointsForPrediction = 10
-    X, Y = generateDataSet("coolFile.pkl", 20, TargetType.CLOSE, True)
-    print(X.shape)
-    print(Y)
+    generateSlicedTimeseriesForNStocks(20)
     
+def generateSlicedTimeseriesForNStocks(numberOfStocks: int):
+    cwd = os.getcwd().split("abzocker")[0]
+    dataPath = os.path.join(cwd, "abzocker", "Resources", "sp500_stocks.csv")
+    stockSymbols = pd.read_csv(dataPath).Symbol.unique()
+    stockPicks = np.random.choice(stockSymbols, numberOfStocks)
+
+    for stock in stockPicks:
+        generateDataSet(f"{stock}.pkl", 20, TargetType.CLOSE, True, True)
+
+    
+    
+
+
 def generateDataSet(filename: str, sequenceLength: int, targetType:TargetType, saveAsFile=False, forceOverwrite=False):
     """
     returns X, Y: timeSeries array and target array
