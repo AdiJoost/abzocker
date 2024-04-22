@@ -8,7 +8,7 @@ np.random.seed(42)
 
 
 def main():
-    generateSlicedTimeseriesForNStocks(2)
+    generateSlicedTimeseriesForNStocks(25)
     
 def generateSlicedTimeseriesForNStocks(numberOfStocks: int, saveAsOneFile=True):
     cwd = os.getcwd().split("abzocker")[0]
@@ -16,20 +16,24 @@ def generateSlicedTimeseriesForNStocks(numberOfStocks: int, saveAsOneFile=True):
     stockSymbols = pd.read_csv(dataPath).Symbol.unique()
     stockPicks = np.random.choice(stockSymbols, numberOfStocks)
 
-    X = []
-    Y = []
-    for stock in stockPicks:
-        XNew, YNew = generateDataSet(f"{stock}.pkl", 20, TargetType.CLOSE, saveAsFile=False)
-        print(f"X_shape: {XNew.shape}, Y_shape: {YNew.shape}")
-        X.append(XNew)
-        Y.append(YNew)
+    if saveAsOneFile:
+        X = []
+        Y = []
+        for stock in stockPicks:
+            XNew, YNew = generateDataSet(f"{stock}.pkl", 20, TargetType.CLOSE, saveAsFile=False)
+            print(f"X_shape: {XNew.shape}, Y_shape: {YNew.shape}")
+            X.append(XNew)
+            Y.append(YNew)
+        
+        X = np.concatenate(X, axis=0)
+        Y = np.concatenate(Y, axis=0)    
+        print(f"X_total shape {X.shape}, Y_total shape {Y.shape}")
+        
+        _saveFile("combined.pkl", X, Y, True)
     
-    X = np.concatenate(X, axis=0)
-    Y = np.concatenate(Y, axis=0)    
-    print(f"X_total shape {X.shape}, Y_total shape {Y.shape}")
-    
-    _saveFile("combined.pkl", X, Y, True)
-    
+    else:
+        for stock in stockPicks:
+            generateDataSet(f"{stock}.pkl", 20, TargetType.CLOSE, saveAsFile=False)
 
 
 def generateDataSet(filename: str, sequenceLength: int, targetType:TargetType, saveAsFile=False, forceOverwrite=False):
@@ -43,10 +47,15 @@ def generateDataSet(filename: str, sequenceLength: int, targetType:TargetType, s
     """
     data = _loadData(filename)
     X, Y = _getTimeWindow(data, sequenceLength, targetType)
+    
     if saveAsFile:
         _saveFile(filename,X,Y,forceOverwrite)
     return X, Y
 
+
+def _removeNan(data):
+    return data.dropna()
+    
 def _saveFile(filename, X, Y, forceOverwrite):
     xPath = _getAndValidateSavePath(f"X_{filename[:-4]}.npy", forceOverwrite)
     yPath = _getAndValidateSavePath(f"Y_{filename[:-4]}.npy", forceOverwrite)
@@ -68,6 +77,7 @@ def _loadData(filename):
     path = _getPath(filename)
     data = pd.read_pickle(path)
     data["Date"] = data["Date"].astype("int64")
+    data = _removeNan(data)
     return data.to_numpy()
 
 def _getPath(filename):

@@ -3,32 +3,54 @@ from keras import layers, losses, optimizers, metrics
 from keras.utils import to_categorical
 import numpy as np
 from keras.datasets import cifar10
-
-"""
-General implementation of a mixture of experts model using the keras subclassing api
-example is for the cifar10 dataset of images (32,32,3)
-
-"""
-
+import os
+from sklearn.model_selection import train_test_split
+np.random.seed(42)
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.preprocessing import MinMaxScaler
 
 
 def main():
-    trainMoE(3,10,6)
-        
-def trainMoE(numberOfExperts=3, inputLength=10, numberOfFeatures=6):
+    cwd = os.getcwd()
+    head = cwd.split("abzocker")
+    dataPath = os.path.join(head[0], "abzocker", "generatedData", "timeSeries")    
     
-    input_shape = (inputLength, numberOfFeatures, 1) # len, features, how many of those per timestep
+    X = np.load(os.path.join(dataPath, "X_combined.npy"))
+    y = np.load(os.path.join(dataPath, "Y_combined.npy"))
+
+    X = np.expand_dims(X, axis=-1)
+    y = np.expand_dims(y, axis=-1)
+    
+
+
+    x_train, x_temp, y_train, y_temp = train_test_split(X, y, test_size=0.2)
+    x_val, x_test, y_val, y_test = train_test_split(x_temp, y_temp, test_size=0.5)
+    
+    numberOfExperts = 3
+    inputLength = x_train[0].shape[0]
+    numberOfFeatures = x_train[0].shape[1]
+    
+    input_shape = (inputLength, numberOfFeatures, 1) # len, features, how many of those per timestep (depth)
     
     moe_model = MixtureOfExperts(numberOfExperts, inputLength, numberOfFeatures, name="mixture_of_experts", input_shape=input_shape)
     
     moe_model.compile(optimizer=optimizers.Adam(),
-                    loss=losses.MeanAbsoluteError(),
-                    metrics=[metrics.MeanAbsoluteError()]) # review loss/metric, maybe custom
+                    loss=losses.MeanSquaredError(),
+                    metrics=[metrics.MeanSquaredError()]) # review loss/metric, maybe custom
     
-    moe_model.fit(x_train, y_train, epochs=5, validation_data=(x_test, y_test), verbose=1)
+    history = moe_model.fit(x_train, y_train, epochs=2, validation_data=(x_val, y_val), verbose=1)
     
     print(moe_model.summary())
-
+    print(f"training loss", history.history["loss"])
+    
+    predictions = moe_model.predict(x_test)
+    
+    mse = mean_squared_error(y_test, predictions)
+    mae = mean_absolute_error(y_test,  predictions)
+    print("MSE:  ", mse)
+    print("MAE:  ", mae)
+    print("RMSE: ", np.sqrt(mse))
+    
 
 
 
@@ -71,6 +93,7 @@ class ExpertModel(tf.keras.Layer):
 class MixtureOfExperts(tf.keras.Model):
     def __init__(self, numberOfExperts, inputLength, numberOfFeatures, name=None , **kwargs):
         super(MixtureOfExperts, self).__init__(name=name, **kwargs)
+        self.norm = layers.BatchNormalization()
         self.experts = [ExpertModel(inputLength, numberOfFeatures, name=f"expert_{i}") for i in range(numberOfExperts)]
         self.dense_units = 128
         self.flatten = layers.Flatten(name=f"{name}_flatten")
@@ -78,7 +101,8 @@ class MixtureOfExperts(tf.keras.Model):
         self.gating_network = layers.Dense(numberOfExperts, activation="softmax", name="gating_network")
         
     def call(self, inputs):
-        expert_outputs = [expert(inputs) for expert in self.experts] 
+        x = self.norm(inputs)
+        expert_outputs = [expert(x) for expert in self.experts] 
         x = self.flatten(inputs) # for the gating network to look at
         self.dense_units = x.shape[-1] # just compute directly one time? features * inputlen = shape[-1]
         self.fc1.units = self.dense_units # fully connected
@@ -88,6 +112,7 @@ class MixtureOfExperts(tf.keras.Model):
         expert_outputs = tf.stack(expert_outputs, axis=1)  # Stack outputs to (batch_size, num_experts, num_classes)
         expert_weights = tf.expand_dims(expert_weights, axis=2)  # Expand dims to (batch_size, num_experts, 1)
         weighted_expert_outputs = tf.reduce_sum(expert_outputs * expert_weights, axis=1)  # Weighted sum
+        print(f"weighted Expert output\033[91m{weighted_expert_outputs}\033[0m expertOuts {expert_outputs} Expert weights {expert_weights}")
         
         return weighted_expert_outputs
 
