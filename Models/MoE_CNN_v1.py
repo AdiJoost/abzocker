@@ -18,13 +18,18 @@ def main():
     X = np.load(os.path.join(dataPath, "X_combined.npy"))
     y = np.load(os.path.join(dataPath, "Y_combined.npy"))
 
-    X = np.expand_dims(X, axis=-1)
-    y = np.expand_dims(y, axis=-1)
-    
+    print(np.isin(X, [0]).sum())
 
+    X = np.expand_dims(X, axis=-1).astype("float32")
+    y = np.expand_dims(y, axis=-1).astype("float32")
+        
 
     x_train, x_temp, y_train, y_temp = train_test_split(X, y, test_size=0.2)
     x_val, x_test, y_val, y_test = train_test_split(x_temp, y_temp, test_size=0.5)
+    
+    trainDataset = tf.data.Dataset.from_tensor_slices((x_train, y_train)).batch(128)
+    testDataset = tf.data.Dataset.from_tensor_slices((x_test,y_test)).batch(128)
+    valDataset = tf.data.Dataset.from_tensor_slices((x_val,y_val)).batch(128)
     
     numberOfExperts = 3
     inputLength = x_train[0].shape[0]
@@ -38,7 +43,7 @@ def main():
                     loss=losses.MeanSquaredError(),
                     metrics=[metrics.MeanSquaredError()]) # review loss/metric, maybe custom
     
-    history = moe_model.fit(x_train, y_train, epochs=2, validation_data=(x_val, y_val), verbose=1)
+    history = moe_model.fit(trainDataset, epochs=2, validation_data=valDataset, verbose=1)
     
     print(moe_model.summary())
     print(f"training loss", history.history["loss"])
@@ -53,7 +58,7 @@ def main():
     
 
 
-
+# Maybe try 1d conv too makes sense too
 class CNNBlock(layers.Layer):
     def __init__(self, filters, kernel_size=(3, 3), pool_size=(3,1), activation="relu", name=None, **kwargs):
         super(CNNBlock, self).__init__(name=name, **kwargs)

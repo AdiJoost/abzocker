@@ -53,7 +53,8 @@ def generateDataSet(filename: str, sequenceLength: int, targetType:TargetType, s
     return X, Y
 
 
-def _removeNan(data):
+def _removeNanNoneNull(data):
+    data = data
     return data.dropna()
     
 def _saveFile(filename, X, Y, forceOverwrite):
@@ -77,7 +78,7 @@ def _loadData(filename):
     path = _getPath(filename)
     data = pd.read_pickle(path)
     data["Date"] = data["Date"].astype("int64")
-    data = _removeNan(data)
+    data = _removeNanNoneNull(data)
     return data.to_numpy()
 
 def _getPath(filename):
