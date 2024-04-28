@@ -5,6 +5,7 @@ import os
 from targetTypeEnum import TargetType
 #from dataHandling.StockDataExtractor import getStocksymbols
 np.random.seed(42)
+from sklearn.preprocessing import MinMaxScaler
 
 
 def main():
@@ -53,8 +54,8 @@ def generateDataSet(filename: str, sequenceLength: int, targetType:TargetType, s
     return X, Y
 
 
-def _removeNanNoneNull(data):
-    data = data
+def _preprocessData(data):
+    data = MinMaxScaler().fit_transform(data)
     return data.dropna()
     
 def _saveFile(filename, X, Y, forceOverwrite):
@@ -78,7 +79,7 @@ def _loadData(filename):
     path = _getPath(filename)
     data = pd.read_pickle(path)
     data["Date"] = data["Date"].astype("int64")
-    data = _removeNanNoneNull(data)
+    data = _preprocessData(data)
     return data.to_numpy()
 
 def _getPath(filename):

@@ -8,42 +8,63 @@ from sklearn.model_selection import train_test_split
 np.random.seed(42)
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.preprocessing import MinMaxScaler
-
+from keras.optimizers.schedules import ExponentialDecay, CosineDecay
+from keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
+import datetime
 
 def main():
+    
+    # Load Data
     cwd = os.getcwd()
     head = cwd.split("abzocker")
     dataPath = os.path.join(head[0], "abzocker", "generatedData", "timeSeries")    
     
     X = np.load(os.path.join(dataPath, "X_combined.npy"))
     y = np.load(os.path.join(dataPath, "Y_combined.npy"))
-
-    print(np.isin(X, [0]).sum())
-
-    X = np.expand_dims(X, axis=-1).astype("float32")
-    y = np.expand_dims(y, axis=-1).astype("float32")
         
-
+        
+    # Prepare Data
+    X = np.expand_dims(X, axis=-1)
+    y = np.expand_dims(y, axis=-1)
+        
     x_train, x_temp, y_train, y_temp = train_test_split(X, y, test_size=0.2)
     x_val, x_test, y_val, y_test = train_test_split(x_temp, y_temp, test_size=0.5)
     
-    trainDataset = tf.data.Dataset.from_tensor_slices((x_train, y_train)).batch(128)
-    testDataset = tf.data.Dataset.from_tensor_slices((x_test,y_test)).batch(128)
-    valDataset = tf.data.Dataset.from_tensor_slices((x_val,y_val)).batch(128)
+    trainDataset = tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle().batch(64)
+    #testDataset = tf.data.Dataset.from_tensor_slices((x_test,y_test)).batch(64)
+    valDataset = tf.data.Dataset.from_tensor_slices((x_val,y_val)).batch(64)
     
+    
+    # Model
     numberOfExperts = 3
     inputLength = x_train[0].shape[0]
     numberOfFeatures = x_train[0].shape[1]
-    
     input_shape = (inputLength, numberOfFeatures, 1) # len, features, how many of those per timestep (depth)
-    
     moe_model = MixtureOfExperts(numberOfExperts, inputLength, numberOfFeatures, name="mixture_of_experts", input_shape=input_shape)
     
-    moe_model.compile(optimizer=optimizers.Adam(),
-                    loss=losses.MeanSquaredError(),
-                    metrics=[metrics.MeanSquaredError()]) # review loss/metric, maybe custom
     
-    history = moe_model.fit(trainDataset, epochs=2, validation_data=valDataset, verbose=1)
+    # Callbacks
+    initial_learning_rate = 0.1
+    lr_schedule = ExponentialDecay(initial_learning_rate,
+                                    decay_steps=80000,
+                                    decay_rate=0.96,)
+    
+    earlyStop = EarlyStopping(monitor="loss", patience=3)
+    
+    moe_model.compile(optimizer=optimizers.Adam(),
+                    loss=losses.MeanAbsoluteError(),
+                    metrics=[metrics.MeanAbsoluteError()]) # review loss/metric, maybe custom
+    
+    logDir = os.path.join(head[0], "abzocker", "Models", "logs", datetime.datetime.now().strftime("%Y_%m_%d-%H%M%S"))
+    tensorboard = TensorBoard(log_dir=logDir, histogram_freq=1)
+    
+    checkpoint_filepath = os.path.join(head[0], "abzocker", "Models", "checkpoints", "checkpoint.model.keras")
+    checkpoint = ModelCheckpoint(
+        filepath=checkpoint_filepath,
+        save_best_only=True
+    )
+    # train model
+    history = moe_model.fit(trainDataset, epochs=500, validation_data=valDataset, verbose=1, callbacks=[tensorboard, earlyStop, checkpoint])
     
     print(moe_model.summary())
     print(f"training loss", history.history["loss"])
@@ -74,9 +95,15 @@ class CNNBlock(layers.Layer):
 class ExpertModel(tf.keras.Layer):
     def __init__(self, inputLength, numberOfFeatures, name=None, **kwargs):
         super(ExpertModel, self).__init__(name=name, **kwargs)
-        self.cnn1 = CNNBlock(filters=4, kernel_size=(3, numberOfFeatures), pool_size=(2,1), name=f"{name}_cnn1")
-        self.cnn2 = CNNBlock(filters=8, kernel_size=(3, numberOfFeatures), pool_size=(2,1), name=f"{name}_cnn2")
-        self.cnn3 = CNNBlock(filters=16,kernel_size=(3, numberOfFeatures), pool_size=(2,1), name=f"{name}_cnn3")
+        self.norm1 = layers.BatchNormalization()
+        self.cnn1 = CNNBlock(filters=8,  kernel_size=(2, 1), pool_size=(2,1), name=f"{name}_cnn1")
+        self.cnn2 = CNNBlock(filters=16, kernel_size=(1, numberOfFeatures), pool_size=(2,1), name=f"{name}_cnn2")
+        self.norm2 = layers.BatchNormalization()
+        self.dropout1 = layers.Dropout(0.2)
+        
+        self.cnn3 = CNNBlock(filters=32, kernel_size=(3, numberOfFeatures), pool_size=(2,1), name=f"{name}_cnn3")
+        self.cnn4 = CNNBlock(filters=64, kernel_size=(5, numberOfFeatures), pool_size=(2,1), name=f"{name}_cnn4")
+        self.norm3 = layers.BatchNormalization()
         self.flatten = layers.Flatten(name=f"{name}_flatten")
         self.dense_units = 128 # default 
         self.fc1 = layers.Dense(self.dense_units, activation="relu", name=f"{name}_fc1")
@@ -84,14 +111,20 @@ class ExpertModel(tf.keras.Layer):
     
     
     def call(self, inputs):
-        x = self.cnn1(inputs)
+        x = self.norm1(inputs)
+        x = self.cnn1(x)
         x = self.cnn2(x)
+        x = self.norm2(x)
+        x = self.dropout1(x)
+        
+        x = self.cnn3(x)
+        x = self.cnn4(x)
+        x = self.norm3(x)
         x = self.flatten(x)
         self.dense_units = x.shape[-1] # number of units in the flattened x 
         self.fc1.units = self.dense_units
         x = self.fc1(x)
         return self.fc2(x)
-    
 
 
 
@@ -117,7 +150,7 @@ class MixtureOfExperts(tf.keras.Model):
         expert_outputs = tf.stack(expert_outputs, axis=1)  # Stack outputs to (batch_size, num_experts, num_classes)
         expert_weights = tf.expand_dims(expert_weights, axis=2)  # Expand dims to (batch_size, num_experts, 1)
         weighted_expert_outputs = tf.reduce_sum(expert_outputs * expert_weights, axis=1)  # Weighted sum
-        print(f"weighted Expert output\033[91m{weighted_expert_outputs}\033[0m expertOuts {expert_outputs} Expert weights {expert_weights}")
+        #print(f"weighted Expert output\033[91m{weighted_expert_outputs}\033[0m expertOuts {expert_outputs} Expert weights {expert_weights}")
         
         return weighted_expert_outputs
 
