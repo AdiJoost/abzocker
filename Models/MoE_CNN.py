@@ -30,30 +30,30 @@ def main():
     x_train, x_temp, y_train, y_temp = train_test_split(X, y, test_size=0.2)
     x_val, x_test, y_val, y_test = train_test_split(x_temp, y_temp, test_size=0.5)
     
-    trainDataset = tf.data.Dataset.from_tensor_slices((x_train, y_train)).shuffle().batch(64)
+    trainDataset = tf.data.Dataset.from_tensor_slices((x_train, y_train)).batch(32)
     #testDataset = tf.data.Dataset.from_tensor_slices((x_test,y_test)).batch(64)
-    valDataset = tf.data.Dataset.from_tensor_slices((x_val,y_val)).batch(64)
+    valDataset = tf.data.Dataset.from_tensor_slices((x_val,y_val)).batch(32)
     
     
     # Model
-    numberOfExperts = 3
+    numberOfExperts = 30
     inputLength = x_train[0].shape[0]
     numberOfFeatures = x_train[0].shape[1]
-    input_shape = (inputLength, numberOfFeatures, 1) # len, features, how many of those per timestep (depth)
+    input_shape = (inputLength, numberOfFeatures, 1) 
     moe_model = MixtureOfExperts(numberOfExperts, inputLength, numberOfFeatures, name="mixture_of_experts", input_shape=input_shape)
     
     
     # Callbacks
-    initial_learning_rate = 0.1
+    initial_learning_rate = 0.01
     lr_schedule = ExponentialDecay(initial_learning_rate,
                                     decay_steps=80000,
                                     decay_rate=0.96,)
     
-    earlyStop = EarlyStopping(monitor="loss", patience=3)
+    earlyStop = EarlyStopping(monitor="loss", patience=4)
     
     moe_model.compile(optimizer=optimizers.Adam(),
                     loss=losses.MeanAbsoluteError(),
-                    metrics=[metrics.MeanAbsoluteError()]) # review loss/metric, maybe custom
+                    metrics=[metrics.MeanAbsoluteError()]) 
     
     logDir = os.path.join(head[0], "abzocker", "Models", "logs", datetime.datetime.now().strftime("%Y_%m_%d-%H%M%S"))
     tensorboard = TensorBoard(log_dir=logDir, histogram_freq=1)
@@ -64,7 +64,7 @@ def main():
         save_best_only=True
     )
     # train model
-    history = moe_model.fit(trainDataset, epochs=500, validation_data=valDataset, verbose=1, callbacks=[tensorboard, earlyStop, checkpoint])
+    history = moe_model.fit(trainDataset, epochs=400, validation_data=valDataset, verbose=1, callbacks=[tensorboard, earlyStop, checkpoint])
     
     print(moe_model.summary())
     print(f"training loss", history.history["loss"])
@@ -127,7 +127,6 @@ class ExpertModel(tf.keras.Layer):
         return self.fc2(x)
 
 
-
 class MixtureOfExperts(tf.keras.Model):
     def __init__(self, numberOfExperts, inputLength, numberOfFeatures, name=None , **kwargs):
         super(MixtureOfExperts, self).__init__(name=name, **kwargs)
@@ -136,6 +135,7 @@ class MixtureOfExperts(tf.keras.Model):
         self.dense_units = 128
         self.flatten = layers.Flatten(name=f"{name}_flatten")
         self.fc1 = layers.Dense(self.dense_units, activation="relu", name=f"{name}_fc1")
+        self.fc2 = layers.Dense(self.dense_units, activation="relu", name=f"{name}_fc2")
         self.gating_network = layers.Dense(numberOfExperts, activation="softmax", name="gating_network")
         
     def call(self, inputs):
@@ -144,13 +144,14 @@ class MixtureOfExperts(tf.keras.Model):
         x = self.flatten(inputs) # for the gating network to look at
         self.dense_units = x.shape[-1] # just compute directly one time? features * inputlen = shape[-1]
         self.fc1.units = self.dense_units # fully connected
+        self.fc2.units = int(self.dense_units*0.7)
         x = self.fc1(x)
+        
         expert_weights = self.gating_network(x) # based on input get expert weights that lead to best output
         
         expert_outputs = tf.stack(expert_outputs, axis=1)  # Stack outputs to (batch_size, num_experts, num_classes)
         expert_weights = tf.expand_dims(expert_weights, axis=2)  # Expand dims to (batch_size, num_experts, 1)
         weighted_expert_outputs = tf.reduce_sum(expert_outputs * expert_weights, axis=1)  # Weighted sum
-        #print(f"weighted Expert output\033[91m{weighted_expert_outputs}\033[0m expertOuts {expert_outputs} Expert weights {expert_weights}")
         
         return weighted_expert_outputs
 
