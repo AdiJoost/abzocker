@@ -15,6 +15,7 @@ from ta import add_all_ta_features # add all here select only needed one in trai
 
 projectDir = os.getcwd()
 dataPath = os.path.join(projectDir, "data")
+os.makedirs(dataPath, exist_ok=True)
 tickers = pd.read_html("https://en.wikipedia.org/wiki/List_of_S%26P_500_companies")[0]
 tickers = tickers.Symbol.to_list()
 
@@ -38,7 +39,6 @@ def main():
     x_train, y_train = sliceStockData(trainData, features)
     x_val, y_val = sliceStockData(valData, features)
     x_test, y_test = sliceStockData(testData, features)
-    
     np.save(os.path.join(dataPath,"x_train.npy"), x_train)
     np.save(os.path.join(dataPath,"y_train.npy"), y_train)
     np.save(os.path.join(dataPath,"x_val.npy"), x_val)
