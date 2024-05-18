@@ -165,3 +165,7 @@ generatedData/timeSeries/*.npy
 sp500_companies.csv
 sp500_index.csv
 sp500_stocks.csv
+
+Models/logs
+Models/checkpoints
+data
