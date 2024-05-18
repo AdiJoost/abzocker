@@ -32,14 +32,14 @@ sequenceLength = 20
 
 def main():
     # list of preprocessed but not sliced stocks
-    trainData, features = getStockData(tickers, trainDataStart, trainDataEnd)
-    valData, features = getStockData(tickers, valDataStart, valDataEnd)
+    trainData, features, goodTickers = getStockData(tickers, trainDataStart, trainDataEnd)
+    valData, features, goodTickers = getStockData(tickers, valDataStart, valDataEnd)
     testData, features, goodTickers = getStockData(tickers, testDataStart, testDataEnd)
     
     x_train, y_train = sliceStockData(trainData, features)
     x_val, y_val = sliceStockData(valData, features)
     x_test, y_test = sliceStockData(testData, features)
-    x_test_realistic, y_test_realistic = getRealisticTestData(goodTickers, testDataStart, testDataEnd)
+    
     np.save(os.path.join(dataPath,"x_train.npy"), x_train)
     np.save(os.path.join(dataPath,"y_train.npy"), y_train)
     np.save(os.path.join(dataPath,"x_val.npy"), x_val)
@@ -119,7 +119,7 @@ def getTimeWindowsFromStock(data, sequenceLength, features, target = "Close"):
     X = np.zeros((len(generatedTimeseries), sequenceLength, data.shape[1]))
     Y = np.zeros((len(generatedTimeseries)))
     for i, timeWindow in enumerate(generatedTimeseries):
-        X[i,:,:] = timeWindow[:-1,:]
+        X[i] = timeWindow[:-1,:]
         Y[i] = timeWindow[-1, features.get_loc(target)]
     
     return X, Y
