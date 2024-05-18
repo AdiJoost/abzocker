@@ -4,3 +4,4 @@ keras
 scikit-learn
 tensorflow
 ta
+matplotlib
