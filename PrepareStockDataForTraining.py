@@ -33,12 +33,13 @@ def main():
     # list of preprocessed but not sliced stocks
     trainData, features = getStockData(tickers, trainDataStart, trainDataEnd)
     valData, features = getStockData(tickers, valDataStart, valDataEnd)
-    testData, features = getStockData(tickers, testDataStart, testDataEnd)
+    testData, features, goodTickers = getStockData(tickers, testDataStart, testDataEnd)
     
     x_train, y_train = sliceStockData(trainData, features)
     x_val, y_val = sliceStockData(valData, features)
     x_test, y_test = sliceStockData(testData, features)
     
+    x_test_realistic, y_test_realistic = getRealisticTestData(goodTickers, testDataStart, testDataEnd)
     np.save(os.path.join(dataPath,"x_train.npy"), x_train)
     np.save(os.path.join(dataPath,"y_train.npy"), y_train)
     np.save(os.path.join(dataPath,"x_val.npy"), x_val)
@@ -94,7 +95,7 @@ def getStockData(tickers, startDate, endDate, preRunTimesteps = 200):
 
     stockDataList = []
     featureList = []
-    
+    goodTickersList = []
     for ticker in tickers:
         data = yf.download(ticker,shiftedStartDate, endDate, auto_adjust=True, keepna=False, progress=False, threads=8)
         if not data.empty:
@@ -102,11 +103,14 @@ def getStockData(tickers, startDate, endDate, preRunTimesteps = 200):
             
             if data is not None:
                 stockDataList.append(data)
+                goodTickersList.append(ticker)
+                
                 if len(featureList) == 0:
                     featureList = features
-    
+            
+                
     # print(f"Number of stocks in dataset: {len(stockDataList)}")
-    return stockDataList, featureList
+    return stockDataList, featureList, goodTickersList
 
 
 # target one of 'Open', 'High', 'Low', 'Close', 'Volume', ... one of the added indicators
@@ -139,6 +143,10 @@ def sliceStockData(data, features):
     Y = np.expand_dims(Y, axis=-1)  
     
     return X,Y
+
+
+def getRealisticTestData(tickers, testDataStart, testDataEnd, preRunTimesteps = 200):
+    data = yf.download(tickers,shiftDateXDaysEarlier(testDataStart, 1.5 * preRunTimesteps), testDataEnd, auto_adjust=True, keepna=False, progress=False, threads=8)
 
 
 if __name__ == "__main__":
