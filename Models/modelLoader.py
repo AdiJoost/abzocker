@@ -66,7 +66,7 @@ def loadCNN():
 def loadLSTM():
     cwd = os.getcwd()
     head = cwd.split("abzocker")
-    lstmPath = os.path.join(head, "abzocker", "Models", "lstm.keras")
+    lstmPath = os.path.join(head[0], "abzocker", "Models", "lstm.keras")
     model = load_model(lstmPath)
     return model
 

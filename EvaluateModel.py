@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from ta import add_all_ta_features
 from Models import MoE_CNN
+from Models.modelLoader import loadLSTM
 from tensorflow.keras.saving import load_model
 
 
@@ -25,7 +26,7 @@ def main():
     # stockNextDayData -> (stocks, target) 
     stockHistData, stockNextDayData, tickers = loadEvaluationData()
     #model = MoE_CNN.loadModel()
-    model = _loadLSTM()
+    model = loadLSTM()
 
     tradingPeriodReturn = topKBuyAndHold(model, 10,stockHistData, stockNextDayData, initialCapital=10000)
     print(f"tradingPeriodReturn: {tradingPeriodReturn}")
@@ -167,15 +168,6 @@ def downloadFeatures():
     data = add_all_ta_features(data, open="Open", high="High", low="Low", close="Close", volume="Volume", fillna=True)
     features =  data.columns
     np.save(os.path.join(dataPath, "features.npy"), features)
-
-
-def _loadLSTM():
-    #TODO: should be moved to modelLoader.py. But modelLoader.py seems broken. Maybe a .gitignore problem
-    cwd = os.getcwd()
-    head = cwd.split("abzocker")
-    lstmPath = os.path.join(head[0], "abzocker", "Models", "lstm.keras")
-    model = load_model(lstmPath)
-    return model
     
 if __name__ == "__main__":
     main()
