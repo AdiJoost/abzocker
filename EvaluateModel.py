@@ -4,14 +4,12 @@ import tensorflow as tf
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from Models.modelLoader import loadMoE_CNN
 from ta import add_all_ta_features
+from Models import MoE_CNN
 
-modelName = "MoE_CNN_2D.keras"
 
 projectDir = os.getcwd().split("abzocker")[0]
 dataPath = os.path.join(projectDir, "abzocker", "data")
-modelPath = os.path.join(projectDir, "abzocker", "Models", "checkpoints", modelName)
 
 testDataStart = "2015-01-02"
 testDataEnd = "2022-12-12"
@@ -25,7 +23,7 @@ def main():
     # stockHistData    -> (stocks, timesteps, features)
     # stockNextDayData -> (stocks, target) 
     stockHistData, stockNextDayData, tickers = loadEvaluationData()
-    model = loadMoE_CNN()
+    model = MoE_CNN.loadModel()
 
 
     tradingPeriodReturn = topKBuyAndHold(model, 10,stockHistData, stockNextDayData, initialCapital=10000)
@@ -39,7 +37,8 @@ def topKBuyAndHold(model, k, stockHistData, stockNextDayData, initialCapital = 1
     monthlyReturns = []
     
     riskFreeRate = 0.02  # Example risk-free rate, adjust as needed
-    transactionCostBuy = 0.0015  # 0.15% for buying shares
+    # in recent years there has been a move towards commission free tradin, so we could set it to 0%
+    transactionCostBuy = 0.0015  # 0.15% for buying shares 
     transactionCostSell = 0.0025  # 0.25% for selling shares
     
     
@@ -58,7 +57,7 @@ def topKBuyAndHold(model, k, stockHistData, stockNextDayData, initialCapital = 1
         for stock in list(portfolio.keys()):
             if stock not in [stock[1] for stock in topKStocks]:
                 sellPrice = getPriceOfStocksToday(stockHistData, t)
-                portfolioValue += portfolio[stock] * sellPrice[stock] * (1 - transactionCostSell)
+                portfolioValue += (portfolio[stock] * sellPrice[stock]) * (1 - transactionCostSell)
                 del portfolio[stock]
         
         investmentPerStock = portfolioValue / k
@@ -99,13 +98,12 @@ def topKBuyAndHold(model, k, stockHistData, stockNextDayData, initialCapital = 1
     plt.show()
     plt.savefig("DailyReturns.png")
     
-    plt.hist(dailyReturns, bins=60, density=True)
+    plt.hist(dailyReturns, bins=100, density=True)
     plt.xlabel("Daily returns %")
     plt.ylabel("Precent")
     plt.show()
     plt.savefig("DailyReturnsHistogramm.png")
-    
-    
+        
     
     # total growth
     dates = pd.date_range(start=testDataStart, end=testDataEnd, freq='B')  # Business days frequency
@@ -175,19 +173,3 @@ if __name__ == "__main__":
     main()
     
     
-    
-    # cwd = os.getcwd()
-    # head = cwd.split("abzocker")
-    # dataPath = os.path.join(head[0], "abzocker", "data")    
-    # x_test = np.load(os.path.join(dataPath,"x_test.npy")).astype(np.float32)[0:10000]
-    # y_test = np.load(os.path.join(dataPath,"y_test.npy")).astype(np.float32)[0:10000]
-
-    # print(model.summary())
-
-    # predictions = model.predict(x_test)
-    # print("Predictions on Test set")
-    # mse = mean_squared_error(y_test, predictions)
-    # mae = mean_absolute_error(y_test,  predictions)
-    # print("MSE:  ", mse)
-    # print("MAE:  ", mae)
-    # print("RMSE: ", np.sqrt(mse))
