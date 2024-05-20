@@ -143,10 +143,6 @@ def sliceStockData(data, features):
     return X,Y
 
 
-def getRealisticTestData(tickers, testDataStart, testDataEnd, preRunTimesteps = 200):
-    data = yf.download(tickers,shiftDateXDaysEarlier(testDataStart, 1.5 * preRunTimesteps), testDataEnd, auto_adjust=True, keepna=False, progress=False, threads=8)
-
-
 if __name__ == "__main__":
     main()
 
