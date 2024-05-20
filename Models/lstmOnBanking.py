@@ -67,10 +67,10 @@ def getModel():
 
     model.add(Input((numberOfSteps, numberOfFeatures)))
     model.add(
-        LSTM(20, activation='relu', return_sequences=True, dropout=0.2)
+        LSTM(20, activation='relu', return_sequences=True, dropout=0.4)
     )
     model.add(
-        LSTM(20, activation='relu')
+        LSTM(20, activation='relu', dropout=0.4)
     )
     model.add(Dense(1))
 
