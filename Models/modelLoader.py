@@ -1,6 +1,7 @@
 import os
 from Models.MoE_CNN import MixtureOfExperts, ExpertModel, CNNBlock 
 from sklearn.metrics import mean_absolute_error, mean_squared_error
+from tensorflow.keras.saving import load_model
 
 import numpy as np
 import os
@@ -63,8 +64,11 @@ def loadCNN():
     pass
 
 def loadLSTM():
-    print("NotImplemented")
-    pass
+    cwd = os.getcwd()
+    head = cwd.split("abzocker")
+    lstmPath = os.path.join(head, "abzocker", "Models", "lstm.keras")
+    model = load_model(lstmPath)
+    return model
 
 
 def loadMoE_CNN_SMALL():
