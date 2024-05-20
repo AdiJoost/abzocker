@@ -169,3 +169,5 @@ sp500_stocks.csv
 Models/logs
 Models/checkpoints
 data
+lstm.keras
+*.log
