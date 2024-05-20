@@ -24,9 +24,9 @@ def main():
         logger.info("creating model")
         model = getModel()
         logger.info("Training Model")
-        model.fit(x_train, y_train, epochs=epochs, batch_size=batches, validation_data=(x_test, y_test), shuffle="True", callbacks=getCallback())
+        model.fit(x_train, y_train, epochs=epochs, batch_size=batches, validation_data=(x_val, y_val), shuffle="True", callbacks=getCallback())
         logger.info("Training completed")
-        score = model.evaluate(x_val, y_val)
+        score = model.evaluate(x_test, y_test)
         logger.info(f"Last Model got a score of: {score}")
     except Exception as e:
         logger.error(f"Error in execution {str(e)}")

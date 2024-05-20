@@ -32,9 +32,9 @@ sequenceLength = 20
 
 def main():
     # list of preprocessed but not sliced stocks
-    trainData, features, goodTickers = getStockData(tickers, trainDataStart, trainDataEnd)
-    valData, features, goodTickers = getStockData(tickers, valDataStart, valDataEnd)
-    testData, features, goodTickers = getStockData(tickers, testDataStart, testDataEnd)
+    trainData, features = getStockData(tickers, trainDataStart, trainDataEnd)
+    valData, features = getStockData(tickers, valDataStart, valDataEnd)
+    testData, features = getStockData(tickers, testDataStart, testDataEnd)
     
     x_train, y_train = sliceStockData(trainData, features)
     x_val, y_val = sliceStockData(valData, features)
@@ -95,7 +95,6 @@ def getStockData(tickers, startDate, endDate, preRunTimesteps = 200):
 
     stockDataList = []
     featureList = []
-    goodTickersList = []
     for ticker in tickers:
         data = yf.download(ticker,shiftedStartDate, endDate, auto_adjust=True, keepna=False, progress=False, threads=8)
         if not data.empty:
@@ -103,14 +102,13 @@ def getStockData(tickers, startDate, endDate, preRunTimesteps = 200):
             
             if data is not None:
                 stockDataList.append(data)
-                goodTickersList.append(ticker)
                 
                 if len(featureList) == 0:
                     featureList = features
             
                 
     # print(f"Number of stocks in dataset: {len(stockDataList)}")
-    return stockDataList, featureList, goodTickersList
+    return stockDataList, featureList
 
 
 # target one of 'Open', 'High', 'Low', 'Close', 'Volume', ... one of the added indicators
