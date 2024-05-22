@@ -166,7 +166,7 @@ def downloadFeatures():
     data = data.interpolate(method="spline", order=3)
     data = add_all_ta_features(data, open="Open", high="High", low="Low", close="Close", volume="Volume", fillna=True)
     features =  data.columns
-    np.save(os.path.join(dataDir, "features.npy"), features)
+    np.save(os.path.join(dataPath, "features.npy"), features)
 
     
     
