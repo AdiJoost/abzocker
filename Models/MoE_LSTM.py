@@ -19,13 +19,13 @@ cwd = os.getcwd()
 head = cwd.split("abzocker")
 dataDir = os.path.join(head[0], "abzocker", "data")    
 modelDir = os.path.join(head[0], "abzocker", "Models", "Models")
-perfromanceDir = os.path.join(head[0], "abzocker", "performance")
+performanceDir = os.path.join(head[0], "abzocker", "performance")
 
 modelName = "MoE_LSTM.keras"
 
 tensorboardLogDir = os.path.join(head[0], "abzocker", "Models", "logs", datetime.datetime.now().strftime("%Y_%m_%d-%H%M%S"))
 
-for dir in [dataDir, modelDir, tensorboardLogDir, perfromanceDir]:
+for dir in [dataDir, modelDir, tensorboardLogDir, performanceDir]:
     if not os.path.exists(dir):
         os.makedirs(dir)
             
@@ -76,7 +76,11 @@ def main():
     results = model.evaluate(x_test, y_test, batch_size=128)
     print(results)    
     
-    with open(os.path.join(perfromanceDir, modelName.split(".")[0], "modelstats.txt"), 'w') as file:
+    modelPerformanceDir = os.path.join(performanceDir, modelName.split(".")[0])
+    if not os.path.exists(modelPerformanceDir):
+        os.makedirs(modelPerformanceDir)
+    
+    with open(os.path.join(modelPerformanceDir, "modelstats.txt"), 'w') as file:
         file.write(results)    
 
 

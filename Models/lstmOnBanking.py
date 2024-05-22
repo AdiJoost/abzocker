@@ -22,9 +22,9 @@ batches = 200
 cwd = os.getcwd()
 head = cwd.split("abzocker")
 modelDir = os.path.join(head[0], "abzocker", "Models", "Models")
-perfromanceDir = os.path.join(head[0], "abzocker", "performance")
+performanceDir = os.path.join(head[0], "abzocker", "performance")
 
-for dir in [modelDir, perfromanceDir]:
+for dir in [modelDir, performanceDir]:
     if not os.path.exists(dir):
         os.makedirs(dir)
     
@@ -40,8 +40,12 @@ def main():
         model.fit(x_train, y_train, epochs=epochs, batch_size=batches, validation_data=(x_val, y_val), shuffle="True", callbacks=getCallback())
         logger.info("Training completed")
         score = model.evaluate(x_test, y_test)
-        with open(os.path.join(perfromanceDir, modelName.split(".")[0], "modelstats.txt"), 'w') as file:
+        modelPerformanceDir = os.path.join(performanceDir, modelName.split(".")[0])
+        if not os.path.exists(modelPerformanceDir):
+            os.makedirs(modelPerformanceDir)
+        with open(os.path.join(modelPerformanceDir, "modelstats.txt"), 'w') as file:
             file.write(score)    
+    
         logger.info(f"Last Model got a score of: {score}")
     except Exception as e:
         logger.error(f"Error in execution {str(e)}")

@@ -18,13 +18,13 @@ cwd = os.getcwd()
 head = cwd.split("abzocker")
 dataDir = os.path.join(head[0], "abzocker", "data")    
 modelDir = os.path.join(head[0], "abzocker", "Models", "Models")
-perfromanceDir = os.path.join(head[0], "abzocker", "performance")
+performanceDir = os.path.join(head[0], "abzocker", "performance")
 
 modelName = "CNN_2D.keras"
 
 tensorboardLogDir = os.path.join(head[0], "abzocker", "Models", "logs", datetime.datetime.now().strftime("%Y_%m_%d-%H%M%S"))
 
-for dir in [dataDir, modelDir, tensorboardLogDir, perfromanceDir]:
+for dir in [dataDir, modelDir, tensorboardLogDir, performanceDir]:
     if not os.path.exists(dir):
         os.makedirs(dir)
             
@@ -86,7 +86,11 @@ def main():
     results = model.evaluate(x_test, y_test, batch_size=128)
     print(results)    
     
-    with open(os.path.join(perfromanceDir, modelName.split(".")[0], "modelstats.txt"), 'w') as file:
+    modelPerformanceDir = os.path.join(performanceDir, modelName.split(".")[0])
+    if not os.path.exists(modelPerformanceDir):
+        os.makedirs(modelPerformanceDir)
+    
+    with open(os.path.join(modelPerformanceDir, "modelstats.txt"), 'w') as file:
         file.write(results)    
 
 
@@ -94,13 +98,14 @@ def main():
 def getOptimizer():
     initial_learning_rate = 0.01
     lrSchedule =  ExponentialDecay(initial_learning_rate,
-                                    decay_steps=80000,
-                                    decay_rate=0.92,)
+                                    decay_steps=100000,
+                                    decay_rate=0.96,
+                                    staircase=True)
     return optimizers.Adam(learning_rate=lrSchedule)
 
 
 def getCallbacks():
-    earlyStop = EarlyStopping(monitor="loss", patience=8, min_delta=0.02)
+    earlyStop = EarlyStopping(monitor="loss", patience=4, min_delta=0.02)
     tensorboard = TensorBoard(log_dir=tensorboardLogDir)
     checkpoint = ModelCheckpoint( 
         filepath=os.path.join(modelDir,modelName),
