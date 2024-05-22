@@ -20,7 +20,7 @@ dataDir = os.path.join(head[0], "abzocker", "data")
 modelDir = os.path.join(head[0], "abzocker", "Models", "Models")
 perfromanceDir = os.path.join(head[0], "abzocker", "performance")
 
-modelName = "CNN_2D.keras"
+modelName = "CNN_2D_ALTERNATIVE_LOSS.keras"
 
 tensorboardLogDir = os.path.join(head[0], "abzocker", "Models", "logs", datetime.datetime.now().strftime("%Y_%m_%d-%H%M%S"))
 
@@ -49,6 +49,7 @@ def main():
     print(f"Shape: {y_val.shape}")
     print(f"Shape: {x_test.shape}")
     print(f"Shape: {y_test.shape}")
+
     
     
     # Model
@@ -75,20 +76,18 @@ def main():
      
      
     model.compile(optimizer=getOptimizer(),
-                    loss=losses.MeanAbsoluteError(),
+                    loss=customLoss,
                     metrics=[metrics.MeanAbsoluteError(), metrics.R2Score()]) 
     history = model.fit(trainDataset, epochs=100, validation_data=valDataset, verbose=1, callbacks=getCallbacks()) 
     
     print(model.summary())
-    
-    
+
     print("Evaluate on test data")
     results = model.evaluate(x_test, y_test, batch_size=128)
     print(results)    
     
     with open(os.path.join(perfromanceDir, modelName, "modelstats.txt"), 'w') as file:
         file.write(results)    
-
 
 
 def getOptimizer():
@@ -100,7 +99,7 @@ def getOptimizer():
 
 
 def getCallbacks():
-    earlyStop = EarlyStopping(monitor="loss", patience=8, min_delta=0.02)
+    earlyStop = EarlyStopping(monitor="loss", patience=8, min_delta=1)
     tensorboard = TensorBoard(log_dir=tensorboardLogDir)
     checkpoint = ModelCheckpoint( 
         filepath=os.path.join(modelDir,modelName),
@@ -108,14 +107,38 @@ def getCallbacks():
         save_weights_only=False
     )
     return [earlyStop, tensorboard, checkpoint]
-        
+
+@keras.saving.register_keras_serializable(package="my_custom_package", name="customLoss")
+@tf.function()
+def customLoss(y_true, y_pred, mda_weight=0.5):
+    
+    # Mean Absolute Error
+    mae = tf.reduce_mean(tf.abs(y_true - y_pred))
+    
+    # Mean Directional Accuracy
+    true_diff = y_true[1:] - y_true[:-1]
+    pred_diff = y_pred[1:] - y_pred[:-1]
+    
+    true_sign = tf.sign(true_diff)
+    pred_sign = tf.sign(pred_diff)
+    
+    directional_accuracy = tf.reduce_mean(tf.cast(tf.equal(true_sign, pred_sign), tf.float32))
+    
+    # Combine MAE and MDA with the weighting factor
+    combined_loss = mae - mda_weight * directional_accuracy
+    
+    return combined_loss
+
+
         
 def loadModel():
     trainedModelPath = os.path.join(modelDir, modelName)
     custom_objects = {
         "CNNBlock": CNNBlock
     }
-    model = keras.models.load_model(trainedModelPath, custom_objects=custom_objects)
+    
+    # , "customLoss": customLoss
+    model = keras.models.load_model(trainedModelPath, custom_objects=custom_objects, compile=False)
     return model, modelName
 
 

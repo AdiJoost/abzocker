@@ -5,6 +5,7 @@ from tensorflow.keras.metrics import mean_absolute_error
 from tensorflow.keras.optimizers.schedules import ExponentialDecay
 from tensorflow.keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint
+from keras.models import load_model
 import numpy as np
 
 import os
@@ -17,6 +18,18 @@ numberOfFeatures = 91
 epochs = 200
 batches = 200
 
+
+cwd = os.getcwd()
+head = cwd.split("abzocker")
+modelDir = os.path.join(head[0], "abzocker", "Models", "Models")
+perfromanceDir = os.path.join(head[0], "abzocker", "performance")
+
+for dir in [modelDir, perfromanceDir]:
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+    
+modelName = "lstm.keras"
+
 def main():
     try:
         logger.info("Loaded Dataset")
@@ -27,6 +40,8 @@ def main():
         model.fit(x_train, y_train, epochs=epochs, batch_size=batches, validation_data=(x_val, y_val), shuffle="True", callbacks=getCallback())
         logger.info("Training completed")
         score = model.evaluate(x_test, y_test)
+        with open(os.path.join(perfromanceDir, modelName, "modelstats.txt"), 'w') as file:
+            file.write(score)    
         logger.info(f"Last Model got a score of: {score}")
     except Exception as e:
         logger.error(f"Error in execution {str(e)}")
@@ -79,7 +94,7 @@ def getModel():
 
 def getCallback():
     checkpoint = ModelCheckpoint(
-        filepath='Models/lstm.keras',
+        filepath=os.path.join(modelDir, modelName),
         monitor='val_loss',
         verbose=0,
         save_best_only=True,
@@ -88,6 +103,12 @@ def getCallback():
     )
     earlyStopping = EarlyStopping(monitor="val_loss", patience=20, mode="min", verbose=0)
     return [checkpoint, earlyStopping]
+
+def loadModel():
+    trainedModelPath = os.path.join(modelDir, modelName)
+    model = load_model(trainedModelPath)
+    return model, modelName
+
 
 def _setLogger():
     cwd = os.getcwd()

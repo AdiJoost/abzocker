@@ -172,4 +172,7 @@ data
 lstm.keras
 *.log
 Models/Models/CNN_2D.keras
+Models/Models/CNN_2D_ALTERNATIVE_LOSS.keras
 Models/Models/MoE_CNN_2D.keras
+Models/Models/MoE_LSTM.keras
+
