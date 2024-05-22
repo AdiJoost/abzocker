@@ -40,7 +40,7 @@ def main():
         model.fit(x_train, y_train, epochs=epochs, batch_size=batches, validation_data=(x_val, y_val), shuffle="True", callbacks=getCallback())
         logger.info("Training completed")
         score = model.evaluate(x_test, y_test)
-        with open(os.path.join(perfromanceDir, modelName, "modelstats.txt"), 'w') as file:
+        with open(os.path.join(perfromanceDir, modelName.split(".")[0], "modelstats.txt"), 'w') as file:
             file.write(score)    
         logger.info(f"Last Model got a score of: {score}")
     except Exception as e:
@@ -107,7 +107,7 @@ def getCallback():
 def loadModel():
     trainedModelPath = os.path.join(modelDir, modelName)
     model = load_model(trainedModelPath)
-    return model, modelName
+    return model, modelName.split(".")[0]
 
 
 def _setLogger():

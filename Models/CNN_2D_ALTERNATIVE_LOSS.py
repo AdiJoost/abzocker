@@ -86,7 +86,7 @@ def main():
     results = model.evaluate(x_test, y_test, batch_size=128)
     print(results)    
     
-    with open(os.path.join(perfromanceDir, modelName, "modelstats.txt"), 'w') as file:
+    with open(os.path.join(perfromanceDir, modelName.split(".")[0], "modelstats.txt"), 'w') as file:
         file.write(results)    
 
 
@@ -139,7 +139,7 @@ def loadModel():
     
     # , "customLoss": customLoss
     model = keras.models.load_model(trainedModelPath, custom_objects=custom_objects, compile=False)
-    return model, modelName
+    return model, modelName.split(".")[0]
 
 
 

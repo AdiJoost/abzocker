@@ -76,7 +76,7 @@ def main():
     results = model.evaluate(x_test, y_test, batch_size=128)
     print(results)    
     
-    with open(os.path.join(perfromanceDir, modelName, "modelstats.txt"), 'w') as file:
+    with open(os.path.join(perfromanceDir, modelName.split(".")[0], "modelstats.txt"), 'w') as file:
         file.write(results)    
 
 def getOptimizer():
@@ -106,7 +106,7 @@ def loadModel():
         "CNNBlock": CNNBlock
     }
     model = keras.models.load_model(trainedModelPath, custom_objects=custom_objects)
-    return model, modelName
+    return model, modelName.split(".")[0]
 
 
 @keras.saving.register_keras_serializable(package="my_custom_package", name="MixtureOfExperts")
