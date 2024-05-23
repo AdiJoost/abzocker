@@ -31,7 +31,7 @@ def main():
         CNN_2D_ALT_LOSS,
         CNN_2D,
         MoE_CNN_2D,
-        # lstmOnBanking,
+        lstmOnBanking,
         MoE_LSTM_ALT_LOSS,
         MoE_LSTM
     ]
@@ -118,7 +118,7 @@ def topKBuyAndHold(model, k, stockHistData, stockNextDayData, initialCapital = 1
         
         
         
-    cumReturns  = np.cumprod([dr+1 for dr in dailyReturns]) -1
+    cumReturns  = np.cumprod([dr+1 for dr in dailyReturns]) - 1
     np.save(os.path.join(modelPerformanceDir, "dailyReturns.npy"), dailyReturns)
     np.save(os.path.join(modelPerformanceDir, "cumulativeReturns.npy"), cumReturns)
     np.save(os.path.join(modelPerformanceDir, "portfolioValueDevelopment.npy"), portfolioValueDevelopment)
