@@ -32,6 +32,7 @@ def main():
         CNN_2D,
         MoE_CNN_2D,
         lstmOnBanking,
+        MoE_LSTM_ALT_LOSS
         # MoE_LSTM
     ]
     
