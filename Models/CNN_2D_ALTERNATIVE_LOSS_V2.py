@@ -20,7 +20,7 @@ dataDir = os.path.join(head[0], "abzocker", "data")
 modelDir = os.path.join(head[0], "abzocker", "Models", "Models")
 performanceDir = os.path.join(head[0], "abzocker", "performance")
 
-modelName = "CNN_2D.keras"
+modelName = "CNN_2D_ALTERNATIVE_LOSS_V2.keras"
 
 tensorboardLogDir = os.path.join(head[0], "abzocker", "Models", "logs", datetime.datetime.now().strftime("%Y_%m_%d-%H%M%S"))
 
@@ -49,6 +49,7 @@ def main():
     print(f"Shape: {y_val.shape}")
     print(f"Shape: {x_test.shape}")
     print(f"Shape: {y_test.shape}")
+
     
     
     # Model
@@ -75,17 +76,16 @@ def main():
      
      
     model.compile(optimizer=getOptimizer(),
-                    loss=losses.MeanAbsoluteError(),
+                    loss=losses.CosineSimilarity(),
                     metrics=[metrics.MeanAbsoluteError(), metrics.R2Score()]) 
     history = model.fit(trainDataset, epochs=100, validation_data=valDataset, verbose=1, callbacks=getCallbacks()) 
     
     print(model.summary())
-    
-    
+
     print("Evaluate on test data")
     results = model.evaluate(x_test, y_test, batch_size=128)
     print(results)    
-    
+        
     modelPerformanceDir = os.path.join(performanceDir, modelName.split(".")[0])
     if not os.path.exists(modelPerformanceDir):
         os.makedirs(modelPerformanceDir)
@@ -99,14 +99,13 @@ def main():
 def getOptimizer():
     initial_learning_rate = 0.01
     lrSchedule =  ExponentialDecay(initial_learning_rate,
-                                    decay_steps=100000,
-                                    decay_rate=0.96,
-                                    staircase=True)
+                                    decay_steps=80000,
+                                    decay_rate=0.92,)
     return optimizers.Adam(learning_rate=lrSchedule)
 
 
 def getCallbacks():
-    earlyStop = EarlyStopping(monitor="loss", patience=4, min_delta=0.02)
+    earlyStop = EarlyStopping(monitor="loss", patience=8, min_delta=1)
     tensorboard = TensorBoard(log_dir=tensorboardLogDir)
     checkpoint = ModelCheckpoint( 
         filepath=os.path.join(modelDir,modelName),
@@ -114,14 +113,27 @@ def getCallbacks():
         save_weights_only=False
     )
     return [earlyStop, tensorboard, checkpoint]
-        
+
+@keras.saving.register_keras_serializable(package="my_custom_package", name="customLoss")
+@tf.function()
+def customLoss(y_true, y_pred,  alpha=0.5):
+    # Cosine similarity loss
+    cosine_loss = tf.keras.losses.CosineSimilarity(axis=-1)(y_true, y_pred)
+    cosine_loss = 1 + cosine_loss  # Adjust because tf.keras.losses.CosineSimilarity returns negative values
+
+    mae_loss = tf.keras.losses.MeanAbsoluteError()(y_true, y_pred)
+    
+    loss = alpha * cosine_loss + (1 - alpha) * mae_loss
+    return loss
+
         
 def loadModel():
     trainedModelPath = os.path.join(modelDir, modelName)
     custom_objects = {
         "CNNBlock": CNNBlock
     }
-    model = keras.models.load_model(trainedModelPath, custom_objects=custom_objects)
+    
+    model = keras.models.load_model(trainedModelPath, custom_objects=custom_objects, compile=False)
     return model, modelName.split(".")[0]
 
 

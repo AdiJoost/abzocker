@@ -69,8 +69,8 @@ def main():
     
     print(model.summary())
 
-    keras.models.save_model(model, model, overwrite=True)
-    
+    trainedModelPath = os.path.join(modelDir, modelName)
+    keras.models.save_model(model, trainedModelPath, overwrite=True)    
         
     print("Evaluate on test data")
     results = model.evaluate(x_test, y_test, batch_size=128)
@@ -81,7 +81,9 @@ def main():
         os.makedirs(modelPerformanceDir)
     
     with open(os.path.join(modelPerformanceDir, "modelstats.txt"), 'w') as file:
-        file.write(results)    
+        file.write("Evaluation Results:\n")
+        for metric, value in zip(model.metrics_names, results):
+            file.write(f"{metric}: {value}\n")
 
 
 def getOptimizer():

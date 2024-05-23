@@ -91,8 +91,9 @@ def main():
         os.makedirs(modelPerformanceDir)
     
     with open(os.path.join(modelPerformanceDir, "modelstats.txt"), 'w') as file:
-        file.write(results)    
-
+        file.write("Evaluation Results:\n")
+        for metric, value in zip(model.metrics_names, results):
+            file.write(f"{metric}: {value}\n")
 
 
 def getOptimizer():
@@ -142,7 +143,6 @@ def loadModel():
         "CNNBlock": CNNBlock
     }
     
-    # , "customLoss": customLoss
     model = keras.models.load_model(trainedModelPath, custom_objects=custom_objects, compile=False)
     return model, modelName.split(".")[0]
 

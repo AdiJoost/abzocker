@@ -34,7 +34,7 @@ def main():
     
     # To load the Data into TensorDatasets
     batchSize = 128
-    
+
     x_train = np.load(os.path.join(dataDir,"x_train.npy")).astype(np.float32)
     y_train = np.load(os.path.join(dataDir,"y_train.npy")).astype(np.float32)
     x_val = np.load(os.path.join(dataDir,"x_val.npy")).astype(np.float32)
@@ -43,7 +43,7 @@ def main():
     y_test = np.load(os.path.join(dataDir,"y_test.npy")).astype(np.float32)
     trainDataset = tf.data.Dataset.from_tensor_slices((x_train, y_train)).batch(batchSize)
     valDataset = tf.data.Dataset.from_tensor_slices((x_val, y_val)).batch(batchSize)
-    
+
     print(f"Shape: {x_train.shape}")
     print(f"Shape: {y_train.shape}")
     print(f"Shape: {x_val.shape}")
@@ -69,8 +69,9 @@ def main():
     history = model.fit(trainDataset, epochs=100, validation_data=valDataset, verbose=1, callbacks=getCallbacks()) # 
     
     print(model.summary())
-
-    keras.models.save_model(model, model, overwrite=True)
+    
+    trainedModelPath = os.path.join(modelDir, modelName)
+    keras.models.save_model(model, trainedModelPath, overwrite=True)
     
     print("Evaluate on test data")
     results = model.evaluate(x_test, y_test, batch_size=128)
@@ -81,7 +82,9 @@ def main():
         os.makedirs(modelPerformanceDir)
     
     with open(os.path.join(modelPerformanceDir, "modelstats.txt"), 'w') as file:
-        file.write(results)    
+        file.write("Evaluation Results:\n")
+        for metric, value in zip(model.metrics_names, results):
+            file.write(f"{metric}: {value}\n")  
 
 def getOptimizer():
     initial_learning_rate = 0.01
@@ -252,3 +255,7 @@ class CNNBlock(tf.keras.layers.Layer):
         config["name"] = self.name
         
         return config
+    
+    
+if __name__ == "__main__":
+    main()

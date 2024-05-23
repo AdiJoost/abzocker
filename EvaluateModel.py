@@ -28,10 +28,10 @@ def main():
 
     # or for all Models
     modelList = [
-        CNN_2D_ALTERNATIVE_LOSS,
-        CNN_2D,
-        MoE_CNN_2D,
-        lstmOnBanking,
+        # CNN_2D_ALTERNATIVE_LOSS,
+        # CNN_2D,
+        # MoE_CNN_2D,
+        # lstmOnBanking,
         MoE_LSTM
     ]
     
