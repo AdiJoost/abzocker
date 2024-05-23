@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from ta import add_all_ta_features
-from Models import CNN_2D_ALT_LOSS, MoE_CNN_2D, MoE_LSTM, lstmOnBanking, CNN_2D, MoE_LSTM_ALT_LOSS
+from Models import CNN_2D_ALT_LOSS, MoE_CNN_2D, MoE_LSTM, lstmOnBanking, CNN_2D, MoE_LSTM_ALT_LOSS, MoE_CNN_2D_ALT_LOSS
 import math
 from tqdm import tqdm
 projectDir = os.getcwd().split("abzocker")[0]
@@ -28,12 +28,13 @@ def main():
 
     # or for all Models
     modelList = [
-        CNN_2D_ALT_LOSS,
-        CNN_2D,
-        MoE_CNN_2D,
-        lstmOnBanking,
-        MoE_LSTM_ALT_LOSS,
-        MoE_LSTM
+        # CNN_2D_ALT_LOSS,
+        # CNN_2D,
+        # MoE_CNN_2D,
+        # lstmOnBanking,
+        # MoE_LSTM_ALT_LOSS,
+        # MoE_LSTM,
+        MoE_CNN_2D_ALT_LOSS
     ]
     
     for m in modelList:
