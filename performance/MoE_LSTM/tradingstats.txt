@@ -1,2 +1,2 @@
-TradingPeriodReturn: 761.2877145016157 
-Annual Return: 1.3158817224240753
+TradingPeriodReturn: 15.259608302248095 
+Annual Return: 0.4118890472145085

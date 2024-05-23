@@ -44,7 +44,8 @@ def main():
         if not os.path.exists(modelPerformanceDir):
             os.makedirs(modelPerformanceDir)
         with open(os.path.join(modelPerformanceDir, "modelstats.txt"), 'w') as file:
-            file.write(score)    
+            file.write(score)   
+        print(score) 
     
         logger.info(f"Last Model got a score of: {score}")
     except Exception as e:

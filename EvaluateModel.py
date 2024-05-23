@@ -5,9 +5,9 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from ta import add_all_ta_features
-from Models import MoE_CNN_2D, MoE_LSTM, lstmOnBanking, CNN_2D, CNN_2D_ALTERNATIVE_LOSS, MoE_LSTM_ALT_LOSS
-
-
+from Models import CNN_2D_ALT_LOSS, MoE_CNN_2D, MoE_LSTM, lstmOnBanking, CNN_2D, MoE_LSTM_ALT_LOSS
+import math
+from tqdm import tqdm
 projectDir = os.getcwd().split("abzocker")[0]
 dataDir = os.path.join(projectDir, "abzocker", "data")
 perfromanceDir = os.path.join(projectDir, "abzocker", "performance")
@@ -28,16 +28,16 @@ def main():
 
     # or for all Models
     modelList = [
-        CNN_2D_ALTERNATIVE_LOSS,
+        CNN_2D_ALT_LOSS,
         CNN_2D,
         MoE_CNN_2D,
-        lstmOnBanking,
-        MoE_LSTM_ALT_LOSS
-        # MoE_LSTM
+        # lstmOnBanking,
+        MoE_LSTM_ALT_LOSS,
+        MoE_LSTM
     ]
     
     for m in modelList:
-        topKBuyAndHold(m, 10,stockHistData, stockNextDayData, initialCapital=10000)
+        topKBuyAndHold(m, 10, stockHistData, stockNextDayData, initialCapital=10000)
         
 
 
@@ -49,20 +49,23 @@ def topKBuyAndHold(model, k, stockHistData, stockNextDayData, initialCapital = 1
         os.makedirs(modelPerformanceDir)
     
     
-    startMoney = initialCapital
-    portfolioValue = initialCapital
+    cash = initialCapital
+    portfolioValue = 0
+    dailyValue = initialCapital
+    
     portfolio = {}
     dailyReturns = []
     portfolioValueDevelopment = []
-    
-    
+        
     # in recent years there has been a move towards commission free tradin, so we could set it to 0%
     transactionCostBuy = 0.0015  # 0.15% for buying shares 
     transactionCostSell = 0.0025  # 0.25% for selling shares
     
     
-    for t in range(len(stockNextDayData[0]) - 1):
-         
+    investmentFactorNewStocks = 0.1
+
+    for t in tqdm(range(len(stockNextDayData[0]) - 1)):
+        
         predictedPrices = getPredictedStockValueAtDay(model, stockHistData, t)
         predictedStockValueChangePercent = getPredictedStockValuesChangePercent(stockHistData, predictedPrices, t)
         
@@ -70,35 +73,49 @@ def topKBuyAndHold(model, k, stockHistData, stockNextDayData, initialCapital = 1
         sortedStockReturns = sorted(returnsWithStockIndices, reverse=True)
         
         topKStocks = sortedStockReturns[:k]
+
         
         # Sell stocks not in top k
         for stock in list(portfolio.keys()):
             if stock not in [stock[1] for stock in topKStocks]:
                 sellPrice = getPriceOfStocksToday(stockHistData, t)
-                portfolioValue += (portfolio[stock] * sellPrice[stock]) * (1 - transactionCostSell)
+                cash += (portfolio[stock] * sellPrice[stock]) * (1 - transactionCostSell)
+                # portfolioValue -= (portfolio[stock] * sellPrice[stock])
                 del portfolio[stock]
         
-        investmentPerStock = portfolioValue / k
-        # buy top k stocks
+        
+        # Buy new stocks
+        stockCount = len(portfolio.keys())
+        investmentPerNewStock = math.floor(cash * investmentFactorNewStocks)
         for stock in [stock[1] for stock in topKStocks]:
             if stock not in portfolio:
                 buyPrice = getPriceOfStocksToday(stockHistData, t)
-                portfolio[stock] = investmentPerStock / buyPrice[stock] * (1 - transactionCostBuy)
-                
+                portfolio[stock] = float(investmentPerNewStock) / (buyPrice[stock] * (1 - transactionCostBuy))
+                cash -= investmentPerNewStock
 
-        # calculate portfolio value at end of day (check if predictions were good)
+        
+        # invest leftover money by predicted return
+        returnsSum = np.sum([stock[0] for stock in topKStocks])
+        investmentPerStock = [((stock[0]/returnsSum)*cash, stock[1]) for stock in topKStocks]
+        for investment, stock in investmentPerStock:
+                buyPrice = getPriceOfStocksToday(stockHistData, t)
+                portfolio[stock] += float(investment) / (buyPrice[stock] * (1 - transactionCostBuy))
+                cash -= investment
+            
+            
+        # calculate portfolio value at end of day
         portfolioValue = 0
         for stock, investmentAmmount in portfolio.items():
             portfolioValue += investmentAmmount * getActualStockValuesAtNextDay(stockNextDayData, t)[stock]
             
-            
         portfolioValueDevelopment.append(portfolioValue)
-        # calculate daily return
-        dailyReturn =  (portfolioValue / initialCapital) - 1
-        dailyReturns.append(dailyReturn)
         
-        # update initial capital for next day
-        initialCapital = portfolioValue
+        dailyReturn = (portfolioValue / dailyValue) - 1
+        dailyReturns.append(dailyReturn)
+        dailyValue = portfolioValue
+        
+        
+        
         
         
     cumReturns  = np.cumprod([dr+1 for dr in dailyReturns]) -1
@@ -107,7 +124,7 @@ def topKBuyAndHold(model, k, stockHistData, stockNextDayData, initialCapital = 1
     np.save(os.path.join(modelPerformanceDir, "portfolioValueDevelopment.npy"), portfolioValueDevelopment)
 
     # calculate return over entire trading period
-    tradingPeriodReturn = portfolioValue / startMoney
+    tradingPeriodReturn = portfolioValue / initialCapital
     
     # Average yearly return
     cumulativeReturn = cumReturns[-1]
@@ -124,7 +141,7 @@ def topKBuyAndHold(model, k, stockHistData, stockNextDayData, initialCapital = 1
 
 def getPredictedStockValueAtDay(model, stockHistData, t):
     # predict for all stocks, but only timestep i, all features
-    return model.predict(np.expand_dims(stockHistData[:,t], axis=-1)).squeeze()
+    return model.predict(np.expand_dims(stockHistData[:,t], axis=-1), verbose=0).squeeze()
 
 def getActualStockValuesAtNextDay(stockNextDayData, t):
     return stockNextDayData[:,t]
