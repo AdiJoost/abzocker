@@ -31,12 +31,38 @@ def main():
             allPortfolioValueDevelopment.append((dir, portfolioValueDevelopment))
             allDailyReturns.append((dir, dailyReturns))
             allCumulativeReturns.append((dir, cumulativeReturns))
+            
+            calcSHARPE_RATIO(dailyReturns, cumulativeReturns, dir)
 
             
     compareAll(allCumulativeReturns, allPortfolioValueDevelopment)
 
 
 
+
+
+def calcSHARPE_RATIO(dailyReturns, cumReturns, model):
+    
+    # Average yearly return
+    cumulativeReturn = cumReturns[-1]
+    tradingDaysPerYear = 252
+    numDays = len(dailyReturns)
+    annualReturn = (1 + cumulativeReturn) ** (tradingDaysPerYear / numDays) - 1
+
+    avgPortfolioReturn = np.mean(dailyReturns)
+    riskFreeRate = 0.045
+    std = np.std(dailyReturns)
+    
+    sharpe = (annualReturn - riskFreeRate )/ std
+    print(f"\n{model}")
+    print(f"SHARPE: {sharpe}")
+    print(f"Avg Annual: {annualReturn*100}")
+    print(f"Total: {cumReturns[-1]*100}")
+    print(f"Std Daily: {np.std(dailyReturns)*100}")
+
+    
+    
+    
 def compareAll(allCumulativeReturns, allPortfolioValueDevelopment):
     tradingDays = getEstimatedDates(len(allCumulativeReturns[0][1]))
     snp500daily, snp500cum = getSNP500Data(len(tradingDays))
