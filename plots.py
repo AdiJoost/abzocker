@@ -76,6 +76,7 @@ def plotHistogramm(dailyReturns, model, savePath):
     plt.xlabel("Daily returns %")
     plt.ylabel("Percent")
     plt.title(f"Distribution of returns: {model}")
+    plt.grid(True)
     plt.show()
     plt.savefig(os.path.join(savePath, f"DistributionOfReturns_{model}.png"))
     plt.close()
