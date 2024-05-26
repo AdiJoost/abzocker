@@ -5,3 +5,9 @@ scikit-learn
 tensorflow
 ta
 matplotlib
+os
+datetime
+tqdm
+math
+yfinance
+scipy

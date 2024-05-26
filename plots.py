@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import yfinance as yf
 import os
 from matplotlib.ticker import FuncFormatter

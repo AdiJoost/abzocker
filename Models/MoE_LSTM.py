@@ -1,13 +1,8 @@
 import tensorflow as tf
 from keras import layers, losses, optimizers, metrics
-from keras.utils import to_categorical
 import numpy as np
-from keras.datasets import cifar10
 import os
-from sklearn.model_selection import train_test_split
 np.random.seed(42)
-from sklearn.metrics import mean_absolute_error, mean_squared_error
-from sklearn.preprocessing import MinMaxScaler
 from keras.optimizers.schedules import ExponentialDecay
 from keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
 import datetime

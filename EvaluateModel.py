@@ -1,13 +1,11 @@
 from tqdm import tqdm
 import os
-import tensorflow as tf
-import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 from ta import add_all_ta_features
 from Models import CNN_2D_ALT_LOSS, MoE_CNN_2D, MoE_LSTM, lstmOnBanking, CNN_2D, MoE_LSTM_ALT_LOSS, MoE_CNN_2D_ALT_LOSS
 import math
 from tqdm import tqdm
+
 projectDir = os.getcwd().split("abzocker")[0]
 dataDir = os.path.join(projectDir, "abzocker", "data")
 perfromanceDir = os.path.join(projectDir, "abzocker", "performance")
