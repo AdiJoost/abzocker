@@ -19,11 +19,11 @@ os.makedirs(dataPath, exist_ok=True)
 tickers = pd.read_html("https://en.wikipedia.org/wiki/List_of_S%26P_500_companies")[0]
 tickers = tickers.Symbol.to_list()
 
-trainDataStart = "2010-01-01"
-trainDataEnd = "2015-01-01"
-testDataStart = "2015-01-02" #test set ist vorgegeben
-testDataEnd = "2022-12-12"
-valDataStart = "2022-12-12"
+trainDataStart = "2015-01-01"
+trainDataEnd = "2020-01-01"
+testDataStart = "2020-01-02" #test set ist vorgegeben
+testDataEnd = "2021-12-12"
+valDataStart = "2021-12-12"
 valDataEnd = "2024-01-01"
 
 sequenceLength = 20
